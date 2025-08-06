@@ -1,0 +1,41 @@
+{
+  "name": "sensormenu(electron)",
+  "version": "1.0.0",
+  "description": "Display temperature and humidity from MQTT sensors in a menubar app.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder --mac --arm64"
+  },
+  "keywords": [mqtt, temperature, humidity, sensor, menubar],
+  "author": "V.Antedoro",
+  "license": "ISC",
+  "type": "commonjs",
+  "build": {
+    "appId": "com.electron.sensormenu",
+    "productName": "SensorMenu",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "dmg"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "package.json",
+      "main.js",
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "electron-settings": "^4.0.4",
+    "mqtt": "^5.14.0"
+  }
+}
