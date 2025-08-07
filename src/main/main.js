@@ -10,6 +10,8 @@ let tray = null;
 let mqttClient = null;
 let mqttConnected = false;
 let mqttPaused = false;
+let settingsWindow = null; // Declare settingsWindow
+let aboutWindow = null;   // Declare aboutWindow
 
 // Default MQTT configuration
 const defaultMqttConfig = {
@@ -213,7 +215,11 @@ function updateTrayMenu() {
     },
     { label: 'Check for updates...', type: 'normal' },
     { label: 'Settings', type: 'normal', click: () => {
-      let settingsWindow = new BrowserWindow({
+      if (settingsWindow) {
+        settingsWindow.focus();
+        return;
+      }
+      settingsWindow = new BrowserWindow({
         width: 640,
         height: 320,
         webPreferences: {
@@ -223,11 +229,21 @@ function updateTrayMenu() {
         }
       });
       settingsWindow.loadFile('src/renderer/setting.html');
+      settingsWindow.on('closed', () => {
+        settingsWindow = null;
+      });
     }},
     { label: 'About', type: 'normal', click: () => {
-      let aboutWindow = new BrowserWindow({
+      if (aboutWindow) {
+        aboutWindow.focus();
+        return;
+      }
+      aboutWindow = new BrowserWindow({
         width: 325,
         height: 325,
+        maximizable: false, // Disable maximize button
+        minimizable: false, // Disable minimize button
+        resizable: false,   // Disable resizing
         webPreferences: {
           preload: path.join(__dirname, '../preload/preload.js'),
           nodeIntegration: false,
@@ -235,6 +251,9 @@ function updateTrayMenu() {
         }
       });
       aboutWindow.loadFile('src/renderer/about.html');
+      aboutWindow.on('closed', () => {
+        aboutWindow = null;
+      });
     }},
     { type: 'separator' },
     { label: 'Quit', type: 'normal', click: () => app.quit() }
