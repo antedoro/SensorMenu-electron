@@ -222,6 +222,8 @@ function updateTrayMenu() {
       settingsWindow = new BrowserWindow({
         width: 640,
         height: 320,
+        maximizable: false, // Disable maximize button
+        resizable: false,   // Disable resizing
         webPreferences: {
           preload: path.join(__dirname, '../preload/preload.js'),
           nodeIntegration: false,
