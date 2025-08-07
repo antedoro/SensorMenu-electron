@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld('api', {
   send: (channel, data) => ipcRenderer.send(channel, data),
-  receive: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
+  receive: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),
+  onMqttData: (callback) => ipcRenderer.on('mqtt-data', callback)
 });

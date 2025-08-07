@@ -1,6 +1,21 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    overflow: hidden; /* Added to prevent infinite scrollbar */
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .container {
@@ -16,4 +31,30 @@ body {
 .footer {
     font-size: 0.8em;
     color: #888;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two equal columns */
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.chart-item {
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.chart-item h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.chart-item canvas {
+    max-width: 100%;
+    height: 200px; /* Fixed height for all charts */
+    margin: 0 auto; /* Center the canvas */
 }

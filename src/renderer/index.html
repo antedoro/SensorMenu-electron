@@ -4,18 +4,33 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
+      content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline'"
     />
     <link rel="stylesheet" href="style.css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <title>SensorMenu</title>
   </head>
-<body>
-    <h1>Sensor Menu App</h1>
-    <p>This is the main window. It will eventually display sensor data or other relevant information.</p>
-</body>
+  <body>
+    <div class="charts-container">
+      <div class="chart-item">
+        <h2>Temperature Gauge</h2>
+        <canvas id="tempGauge"></canvas>
+      </div>
+      <div class="chart-item">
+        <h2>Humidity Gauge</h2>
+        <canvas id="humGauge"></canvas>
+      </div>
+      <div class="chart-item">
+        <h2>Temperature History</h2>
+        <canvas id="tempChart"></canvas>
+      </div>
+      <div class="chart-item">
+        <h2>Humidity History</h2>
+        <canvas id="humChart"></canvas>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="chart_renderer.js"></script>
+  </body>
 </html>

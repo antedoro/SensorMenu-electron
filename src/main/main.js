@@ -1,4 +1,6 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage } = require('electron');
+
+app.disableHardwareAcceleration();
 const path = require('path');
 const mqtt = require('mqtt');
 const settings = require('electron-settings');
@@ -125,6 +127,9 @@ async function connectMqtt() {
       try {
         const data = JSON.parse(message.toString());
         updateTrayTitle(data.temp, data.hum);
+        if (mainWindow) {
+          mainWindow.webContents.send('mqtt-data', data);
+        }
       } catch (e) {
         console.error('Failed to parse MQTT message:', e);
       }
