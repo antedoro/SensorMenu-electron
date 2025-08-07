@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Settings</title>
-    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Settings</h1>
-    <form>
-        <input type="checkbox" id="openAtLogin"> <label for="openAtLogin">Open at login</label><br>
-        <input type="checkbox" id="checkForUpdates"> <label for="checkForUpdates">Check for updates automatically</label><br>
-        <input type="checkbox" id="showIconInMenubar"> <label for="showIconInMenubar">Show icon in menubar</label><br>
-        <input type="checkbox" id="showTemperature"> <label for="showTemperature">Show temperature</label><br>
-        <input type="checkbox" id="showHumidity"> <label for="showHumidity">Show humidity</label><br>
-        <label for="mqttBrokerIp">MQTT broker IP:</label>
-        <input type="text" id="mqttBrokerIp" value="localhost"><br>
-        <label for="mqttBrokerPort">MQTT broker port:</label>
-        <input type="number" id="mqttBrokerPort" value="1883"><br>
-        <label for="mqttTopic">MQTT topic:</label>
-        <input type="text" id="mqttTopic" value="esp32/dht22"><br>
-        <button type="button" id="restoreDefaults">Restore default settings</button>
-    </form>
+<body class="bg-gray-100 text-sm">
+    <div class="container mx-auto p-4">
+        <div class="flex space-x-4">
+            <div class="w-1/2">
+                <form>
+                    <div class="mb-4">
+                        <input type="checkbox" id="openAtLogin"> <label for="openAtLogin">Open at login</label><br>
+                        <input type="checkbox" id="checkForUpdates"> <label for="checkForUpdates">Check for updates automatically</label><br>
+                        <input type="checkbox" id="showIconInMenubar"> <label for="showIconInMenubar">Show icon in menubar</label><br>
+                        <input type="checkbox" id="showTemperature"> <label for="showTemperature">Show temperature</label><br>
+                        <input type="checkbox" id="showHumidity"> <label for="showHumidity">Show humidity</label><br>
+                    </div>
+                </form>
+            </div>
+            <div class="w-1/2">
+                <form>
+                    <div class="mb-2">
+                        <label for="mqttBrokerIp">MQTT broker IP:</label>
+                        <input type="text" id="mqttBrokerIp" value="localhost" class="w-full p-2 border rounded"><br>
+                    </div>
+                    <div class="mb-2">
+                        <label for="mqttBrokerPort">MQTT broker port:</label>
+                        <input type="number" id="mqttBrokerPort" value="1883" class="w-full p-2 border rounded"><br>
+                    </div>
+                    <div class="mb-2">
+                        <label for="mqttTopic">MQTT topic:</label>
+                        <input type="text" id="mqttTopic" value="esp32/dht22" class="w-full p-2 border rounded"><br>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="flex justify-end">
+            <button type="button" id="restoreDefaults" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">Restore default settings</button>
+        </div>
+    </div>
     <script src="./settings.js"></script>
 </body>
 </html>
