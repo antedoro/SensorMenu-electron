@@ -6,6 +6,19 @@ const humChartCanvas = document.getElementById('humChart');
 
 let tempGauge, humGauge, tempChart, humChart;
 
+function getGaugeColor(value, type) {
+    if (type === 'Temperature') {
+        if (value < 0) return '#007bff'; // Blue for low temp
+        if (value >= 0 && value <= 30) return '#28a745'; // Green for normal temp
+        return '#dc3545'; // Red for high temp
+    } else if (type === 'Humidity') {
+        if (value < 30) return '#007bff'; // Blue for low hum
+        if (value >= 30 && value <= 70) return '#28a745'; // Green for normal hum
+        return '#dc3545'; // Red for high hum
+    }
+    return '#6c757d'; // Default gray
+}
+
 // Function to create a gauge chart (simplified for demonstration)
 function createGauge(canvas, label, value, max) {
     return new Chart(canvas, {
@@ -14,7 +27,7 @@ function createGauge(canvas, label, value, max) {
             labels: [label, ''],
             datasets: [{
                 data: [value, max - value],
-                backgroundColor: ['#4CAF50', '#E0E0E0'],
+                backgroundColor: [getGaugeColor(value, label), '#E0E0E0'],
                 borderWidth: 0
             }]
         },
@@ -55,7 +68,7 @@ function createGauge(canvas, label, value, max) {
 }
 
 // Function to create a line chart
-function createLineChart(canvas, label, borderColor) {
+function createLineChart(canvas, label, borderColor, yMin, yMax) {
     return new Chart(canvas, {
         type: 'line',
         data: {
@@ -75,14 +88,14 @@ function createLineChart(canvas, label, borderColor) {
             scales: {
                 x: {
                     type: 'category',
-                    labels: [],
                     title: {
                         display: true,
                         text: 'Time'
                     }
                 },
                 y: {
-                    beginAtZero: true,
+                    min: yMin,
+                    max: yMax,
                     title: {
                         display: true,
                         text: label
@@ -95,19 +108,19 @@ function createLineChart(canvas, label, borderColor) {
 
 // Initialize charts
 document.addEventListener('DOMContentLoaded', () => {
-    tempGaugeCanvas.width = 200;
-    tempGaugeCanvas.height = 200;
-    humGaugeCanvas.width = 200;
-    humGaugeCanvas.height = 200;
+    tempGaugeCanvas.width = 150;
+    tempGaugeCanvas.height = 150;
+    humGaugeCanvas.width = 150;
+    humGaugeCanvas.height = 150;
     tempChartCanvas.width = 400;
     tempChartCanvas.height = 200;
     humChartCanvas.width = 400;
     humChartCanvas.height = 200;
 
-    tempGauge = createGauge(tempGaugeCanvas, 'Temperature', 0, 50); // Max temp 50°C
+    tempGauge = createGauge(tempGaugeCanvas, 'Temperature', 0, 60); // Max range 60 (from -10 to 50)
     humGauge = createGauge(humGaugeCanvas, 'Humidity', 0, 100); // Max hum 100%
-    tempChart = createLineChart(tempChartCanvas, 'Temperature (°C)', 'rgb(255, 99, 132)');
-    humChart = createLineChart(humChartCanvas, 'Humidity (%)', 'rgb(54, 162, 235)');
+    tempChart = createLineChart(tempChartCanvas, 'Temperature (°C)', 'rgb(255, 99, 132)', -10, 50);
+    humChart = createLineChart(humChartCanvas, 'Humidity (%)', 'rgb(54, 162, 235)', 0, 100);
 });
 
 // Function to update charts
@@ -116,9 +129,11 @@ window.api.onMqttData((event, data) => {
     const timestamp = new Date().toLocaleTimeString();
 
     // Update gauges
-    tempGauge.data.datasets[0].data = [temp, 50 - temp];
+    tempGauge.data.datasets[0].data = [temp + 10, 60 - (temp + 10)]; // Adjust value for -10 to 50 range
+    tempGauge.data.datasets[0].backgroundColor = [getGaugeColor(temp, 'Temperature'), '#E0E0E0'];
     tempGauge.update();
     humGauge.data.datasets[0].data = [hum, 100 - hum];
+    humGauge.data.datasets[0].backgroundColor = [getGaugeColor(hum, 'Humidity'), '#E0E0E0'];
     humGauge.update();
 
     // Update line charts
