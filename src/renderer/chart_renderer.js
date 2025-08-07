@@ -59,7 +59,15 @@ function createGauge(canvas, label, value, max) {
                 ctx.textBaseline = "middle";
 
                 let currentValue = chart.data.datasets[0].data[0];
-                let text = currentValue + (chart.options.plugins.text.label === 'Temperature' ? '°C' : '%'),
+                let displayedValue;
+
+                if (chart.options.plugins.text.label === 'Temperature') {
+                    displayedValue = currentValue - 10; // Subtract 10 to get original temp
+                } else {
+                    displayedValue = currentValue; // Humidity is already correct
+                }
+
+                let text = displayedValue + (chart.options.plugins.text.label === 'Temperature' ? '°C' : '%'),
                     textX = Math.round((width - ctx.measureText(text).width) / 2),
                     textY = height / 1.4;
                 ctx.fillText(text, textX, textY);

@@ -282,7 +282,6 @@ app.whenReady().then(async () => {
   if (!(await settings.has('app'))) await settings.set('app', defaultAppSettings);
   if (!(await settings.has('mqtt'))) await settings.set('mqtt', defaultMqttConfig);
 
-  createWindow();
   createTray();
   await connectMqtt();
 
