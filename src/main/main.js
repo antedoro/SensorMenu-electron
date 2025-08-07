@@ -47,6 +47,10 @@ function createWindow() {
 
   mainWindow.loadFile('src/renderer/index.html');
 
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
 }
@@ -214,6 +218,13 @@ function updateTrayMenu() {
       }
     },
     { label: 'Check for updates...', type: 'normal' },
+    { label: 'Data', type: 'normal', click: () => {
+      if (mainWindow) {
+        mainWindow.focus();
+        return;
+      }
+      createWindow(); // Recreate main window if it was closed
+    }},
     { label: 'Settings', type: 'normal', click: () => {
       if (settingsWindow) {
         settingsWindow.focus();
