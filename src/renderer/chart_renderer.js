@@ -3,10 +3,10 @@ const tempGaugeCanvas = document.getElementById('tempGauge');
 const humGaugeCanvas = document.getElementById('humGauge');
 const tempChartCanvas = document.getElementById('tempChart');
 const humChartCanvas = document.getElementById('humChart');
-const tempDataList = document.getElementById('tempDataList');
-const humDataList = document.getElementById('humDataList');
+const allDataList = document.getElementById('allDataList');
 
 let tempGauge, humGauge, tempChart, humChart;
+let dataIdCounter = 0;
 
 function getGaugeColor(value, type) {
     if (type === 'Temperature') {
@@ -145,21 +145,25 @@ window.api.onMqttData((event, data) => {
     humGauge.data.datasets[0].backgroundColor = [getGaugeColor(hum, 'Humidity'), '#E0E0E0'];
     humGauge.update();
 
-    // Update data lists
+    // Update data list
+    dataIdCounter++;
     const maxListItems = 10; // Limit to 10 items in the list
 
-    const tempListItem = document.createElement('p');
-    tempListItem.innerText = `${now.toLocaleTimeString()}: ${temp}°C`;
-    tempDataList.prepend(tempListItem); // Add to the beginning
-    if (tempDataList.children.length > maxListItems) {
-        tempDataList.removeChild(tempDataList.lastChild);
+    const dataRow = document.createElement('div');
+    dataRow.classList.add('data-list-row');
+    dataRow.innerHTML = `<span class="data-list-col">${dataIdCounter}</span><span class="data-list-col">${now.toLocaleTimeString()}</span><span class="data-list-col">${temp}°C</span><span class="data-list-col">${hum}%</span>`;
+
+    // Insert after the header, but before the first data row
+    const header = allDataList.querySelector('.data-list-header');
+    if (header && header.nextElementSibling) {
+        allDataList.insertBefore(dataRow, header.nextElementSibling);
+    } else {
+        allDataList.appendChild(dataRow); // Fallback if no header or no next sibling
     }
 
-    const humListItem = document.createElement('p');
-    humListItem.innerText = `${now.toLocaleTimeString()}: ${hum}%`;
-    humDataList.prepend(humListItem); // Add to the beginning
-    if (humDataList.children.length > maxListItems) {
-        humDataList.removeChild(humDataList.lastChild);
+    // Remove old items, keeping the header in count
+    while (allDataList.children.length > maxListItems + 1) {
+        allDataList.removeChild(allDataList.lastChild);
     }
 
     // Update line charts
