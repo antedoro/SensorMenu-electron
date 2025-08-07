@@ -30,12 +30,20 @@
       </div>
       <div class="chart-item full-width">
         <h2>All Sensor Data</h2>
-        <div id="allDataList" class="data-list">
-          <div class="data-list-header">
-            <span class="data-list-col">ID</span>
-            <span class="data-list-col">Time</span>
-            <span class="data-list-col">Temp (°C)</span>
-            <span class="data-list-col">Hum (%)</span>
+        <div class="list-container">
+          <div class="list-body">
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th class="list-table th"> </th>
+                  <th class="list-table th">Time</th>
+                  <th class="list-table th">Temperature (°C)</th>
+                  <th class="list-table th">Humidity (%)</th>
+                </tr>
+              </thead>
+              <tbody id="allDataListBody">
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

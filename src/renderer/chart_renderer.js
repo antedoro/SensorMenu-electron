@@ -3,7 +3,7 @@ const tempGaugeCanvas = document.getElementById('tempGauge');
 const humGaugeCanvas = document.getElementById('humGauge');
 const tempChartCanvas = document.getElementById('tempChart');
 const humChartCanvas = document.getElementById('humChart');
-const allDataList = document.getElementById('allDataList');
+const allDataListBody = document.getElementById('allDataListBody');
 
 let tempGauge, humGauge, tempChart, humChart;
 let dataIdCounter = 0;
@@ -87,6 +87,9 @@ function createLineChart(canvas, label, borderColor, yMin, yMax) {
             responsive: false, // Disable responsiveness for line charts
             maintainAspectRatio: false,
             animation: false, // Disable animation for line charts
+            plugins: {
+                legend: { display: false } // Hide legend
+            },
             scales: {
                 x: {
                     type: 'time',
@@ -149,21 +152,18 @@ window.api.onMqttData((event, data) => {
     dataIdCounter++;
     const maxListItems = 10; // Limit to 10 items in the list
 
-    const dataRow = document.createElement('div');
-    dataRow.classList.add('data-list-row');
-    dataRow.innerHTML = `<span class="data-list-col">${dataIdCounter}</span><span class="data-list-col">${now.toLocaleTimeString()}</span><span class="data-list-col">${temp}°C</span><span class="data-list-col">${hum}%</span>`;
+    const dataRow = document.createElement('tr');
+    dataRow.innerHTML = `
+        <td>${dataIdCounter}</td>
+        <td>${now.toLocaleTimeString()}</td>
+        <td>${temp}°C</td>
+        <td>${hum}%</td>
+    `;
+    allDataListBody.appendChild(dataRow);
 
-    // Insert after the header, but before the first data row
-    const header = allDataList.querySelector('.data-list-header');
-    if (header && header.nextElementSibling) {
-        allDataList.insertBefore(dataRow, header.nextElementSibling);
-    } else {
-        allDataList.appendChild(dataRow); // Fallback if no header or no next sibling
-    }
-
-    // Remove old items, keeping the header in count
-    while (allDataList.children.length > maxListItems + 1) {
-        allDataList.removeChild(allDataList.lastChild);
+    // Remove old items
+    while (allDataListBody.children.length > maxListItems) {
+        allDataListBody.removeChild(allDataListBody.firstChild);
     }
 
     // Update line charts
