@@ -63,4 +63,4 @@ Refer to TODO.md to track implementation progress and match each feature with it
 Ensure platform-specific behavior is respected when adapting to Windows/Linux later in development.
 
 
-Look at setting.html for setting window, about.html for about window. app-icon.png anc dew_point_128 icon.png
+Look at settings.html for setting window, about.html for about window. app-icon.png anc dew_point_128 icon.png

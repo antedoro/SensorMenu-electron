@@ -241,7 +241,7 @@ function updateTrayMenu() {
           contextIsolation: true,
         }
       });
-      settingsWindow.loadFile('src/renderer/setting.html');
+      settingsWindow.loadFile('src/renderer/settings.html');
       settingsWindow.on('closed', () => {
         settingsWindow = null;
       });
