@@ -42,6 +42,8 @@
   },
   "dependencies": {
     "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "electron-settings": "^4.0.4",
     "mqtt": "^5.14.0"
   }

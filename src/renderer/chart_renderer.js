@@ -3,18 +3,20 @@ const tempGaugeCanvas = document.getElementById('tempGauge');
 const humGaugeCanvas = document.getElementById('humGauge');
 const tempChartCanvas = document.getElementById('tempChart');
 const humChartCanvas = document.getElementById('humChart');
+const tempDataList = document.getElementById('tempDataList');
+const humDataList = document.getElementById('humDataList');
 
 let tempGauge, humGauge, tempChart, humChart;
 
 function getGaugeColor(value, type) {
     if (type === 'Temperature') {
-        if (value < 0) return '#007bff'; // Blue for low temp
-        if (value >= 0 && value <= 30) return '#28a745'; // Green for normal temp
-        return '#dc3545'; // Red for high temp
+        if (value < 10) return '#007bff'; // Blue for low temp (<10°C)
+        if (value >= 10 && value <= 25) return '#28a745'; // Green for normal temp (10-25°C)
+        return '#dc3545'; // Red for high temp (>25°C)
     } else if (type === 'Humidity') {
-        if (value < 30) return '#007bff'; // Blue for low hum
-        if (value >= 30 && value <= 70) return '#28a745'; // Green for normal hum
-        return '#dc3545'; // Red for high hum
+        if (value < 30) return '#007bff'; // Blue for low hum (<30%)
+        if (value >= 30 && value <= 70) return '#28a745'; // Green for normal hum (30-70%)
+        return '#dc3545'; // Red for high hum (>70%)
     }
     return '#6c757d'; // Default gray
 }
@@ -87,7 +89,14 @@ function createLineChart(canvas, label, borderColor, yMin, yMax) {
             animation: false, // Disable animation for line charts
             scales: {
                 x: {
-                    type: 'category',
+                    type: 'time',
+                    time: {
+                        unit: 'minute',
+                        displayFormats: {
+                            minute: 'HH:mm'
+                        },
+                        tooltipFormat: 'HH:mm:ss'
+                    },
                     title: {
                         display: true,
                         text: 'Time'
@@ -126,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to update charts
 window.api.onMqttData((event, data) => {
     const { temp, hum } = data;
-    const timestamp = new Date().toLocaleTimeString();
+    const now = new Date();
 
     // Update gauges
     tempGauge.data.datasets[0].data = [temp + 10, 60 - (temp + 10)]; // Adjust value for -10 to 50 range
@@ -136,20 +145,39 @@ window.api.onMqttData((event, data) => {
     humGauge.data.datasets[0].backgroundColor = [getGaugeColor(hum, 'Humidity'), '#E0E0E0'];
     humGauge.update();
 
-    // Update line charts
-    tempChart.data.labels.push(timestamp);
-    tempChart.data.datasets[0].data.push(temp);
-    humChart.data.labels.push(timestamp);
-    humChart.data.datasets[0].data.push(hum);
+    // Update data lists
+    const maxListItems = 10; // Limit to 10 items in the list
 
-    // Keep only the last 20 data points
-    const maxDataPoints = 20;
-    if (tempChart.data.labels.length > maxDataPoints) {
+    const tempListItem = document.createElement('p');
+    tempListItem.innerText = `${now.toLocaleTimeString()}: ${temp}°C`;
+    tempDataList.prepend(tempListItem); // Add to the beginning
+    if (tempDataList.children.length > maxListItems) {
+        tempDataList.removeChild(tempDataList.lastChild);
+    }
+
+    const humListItem = document.createElement('p');
+    humListItem.innerText = `${now.toLocaleTimeString()}: ${hum}%`;
+    humDataList.prepend(humListItem); // Add to the beginning
+    if (humDataList.children.length > maxListItems) {
+        humDataList.removeChild(humDataList.lastChild);
+    }
+
+    // Update line charts
+    // Remove data older than 1 hour
+    const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+
+    let i = 0;
+    while (i < tempChart.data.labels.length && new Date(tempChart.data.labels[i]) < oneHourAgo) {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
         humChart.data.labels.shift();
         humChart.data.datasets[0].data.shift();
     }
+
+    tempChart.data.labels.push(now);
+    tempChart.data.datasets[0].data.push(temp);
+    humChart.data.labels.push(now);
+    humChart.data.datasets[0].data.push(hum);
 
     tempChart.update();
     humChart.update();
