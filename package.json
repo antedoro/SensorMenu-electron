@@ -1,6 +1,7 @@
 {
   "name": "sensormenu(electron)",
-  "version": "1.0.0",
+  "productName": "SensorMenu",
+  "version": "0.0.1",
   "description": "Display temperature and humidity from MQTT sensors in a menubar app.",
   "main": "src/main/main.js",
   "scripts": {
@@ -21,6 +22,7 @@
   "build": {
     "appId": "com.electron.sensormenu",
     "productName": "SensorMenu",
+    "icon": "assets/icons/app_icon.png",
     "mac": {
       "category": "public.app-category.utilities",
       "target": "dmg"

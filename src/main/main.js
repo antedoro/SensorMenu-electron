@@ -35,6 +35,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: path.join(__dirname, '../../assets/icons/app_icon.png'), // Set window icon
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       nodeIntegration: false,
@@ -94,6 +95,15 @@ ipcMain.on('restore-default-settings', async (event) => {
     mqttClient.end();
   }
   await connectMqtt();
+});
+
+ipcMain.handle('get-app-info', async () => {
+  const packageJson = require('../../package.json');
+  return {
+    appName: packageJson.productName || packageJson.name,
+    version: packageJson.version,
+    author: packageJson.author,
+  };
 });
 
 async function connectMqtt() {
