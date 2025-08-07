@@ -70,15 +70,16 @@ body {
     padding: 10px;
     margin-top: 10px;
     text-align: left;
-    font-size: 0.9em;
+    font-size: 0.725em; /* Reduced font size */
     background-color: #fff;
     border-radius: 4px;
 }
 
 .data-list-header,
 .data-list-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 50px 1fr 1fr 1fr; /* ID, Time, Temp, Hum */
+    gap: 10px; /* Space between columns */
     padding: 5px 0;
     border-bottom: 1px solid #eee;
 }
@@ -97,6 +98,8 @@ body {
 }
 
 .data-list-col {
-    flex: 1;
-    text-align: center;
+    text-align: left; /* Align content to the left */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
