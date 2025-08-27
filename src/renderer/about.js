@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const appAuthorElement = document.getElementById('appAuthor');
 
     try {
-        const appInfo = await window.api.getAppInfo();
+        const appInfo = await window.electronAPI.getAppInfo();
         appNameElement.innerText = appInfo.appName;
         appVersionElement.innerText = appInfo.version;
         appAuthorElement.innerText = `© 2025 ${appInfo.author}`; // Assuming 2025 as per GEMINI.md

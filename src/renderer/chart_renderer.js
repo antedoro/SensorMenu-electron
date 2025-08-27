@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Function to update charts
-window.api.onMqttData((event, data) => {
+window.electronAPI.onMqttData((event, data) => {
     const { temp, hum } = data;
     const now = new Date();
 

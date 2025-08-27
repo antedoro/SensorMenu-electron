@@ -4,6 +4,7 @@ app.disableHardwareAcceleration();
 const path = require('path');
 const mqtt = require('mqtt');
 const settings = require('electron-settings');
+const UpdateChecker = require('./updater');
 
 let mainWindow;
 let tray = null;
@@ -12,6 +13,10 @@ let mqttConnected = false;
 let mqttPaused = false;
 let settingsWindow = null; // Declare settingsWindow
 let aboutWindow = null;   // Declare aboutWindow
+let updateChecker = null; // Declare updateChecker
+let lastTemp = '--';
+let lastHum = '--';
+
 
 // Default MQTT configuration
 const defaultMqttConfig = {
@@ -24,9 +29,11 @@ const defaultMqttConfig = {
 const defaultAppSettings = {
   openAtLogin: false,
   checkForUpdates: false,
+  updateFrequency: 'weekly', // never, daily, weekly
   showIconInMenubar: true,
   showTemperature: true,
   showHumidity: true,
+  lastUpdateCheck: null,
 };
 
 
@@ -63,29 +70,40 @@ ipcMain.on('get-settings', async (event) => {
   });
 });
 
-ipcMain.on('set-setting', (event, key, value) => {
-  settings.set(`app.${key}`, value);
-  // if (key === 'openAtLogin') {
-  //   app.setLoginItemSettings({
-  //     openAtLogin: value,
-  //     path: app.getPath('exe'),
-  //   });
-  // }
-  // Reconnect MQTT if relevant settings changed
-  if (key === 'showTemperature' || key === 'showHumidity') {
-    // Update tray title immediately if these change
-    // This requires current temp/hum data, which we don't have here.
-    // For now, just update the menu, and the title will update on next MQTT message.
-    updateTrayMenu();
+ipcMain.on('set-setting', async (event, key, value) => {
+  await settings.set(`app.${key}`, value);
+  if (key === 'showIconInMenubar' || key === 'showTemperature' || key === 'showHumidity') {
+    updateTrayTitle();
+  } else if (key === 'openAtLogin') {
+    app.setLoginItemSettings({
+      openAtLogin: value,
+      path: app.getPath('exe'),
+    });
+  } else if (key === 'checkForUpdates' || key === 'updateFrequency') {
+    if (updateChecker) {
+      updateChecker.startAutomaticChecks();
+    }
   }
 });
 
 ipcMain.on('set-mqtt-setting', async (event, key, value) => {
+  console.log(`Updating MQTT setting: ${key} = ${value}`);
   await settings.set(`mqtt.${key}`, value);
-  // Reconnect MQTT if broker IP, port or topic changes
+  
+  // Reconnect MQTT with new settings
   if (mqttClient) {
-    mqttClient.end();
+    console.log('Disconnecting from current MQTT broker...');
+    mqttClient.end(true); // Force close
+    mqttClient = null;
   }
+  
+  // Update status to show reconnecting
+  updateMqttStatusInSettings(false);
+  if (tray) {
+    tray.setTitle('Reconnecting...');
+  }
+  
+  console.log('Reconnecting with new MQTT settings...');
   await connectMqtt();
 });
 
@@ -112,12 +130,40 @@ ipcMain.handle('get-app-info', async () => {
   };
 });
 
+// Update check IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  if (updateChecker) {
+    return await updateChecker.checkForUpdates(false);
+  }
+  return { success: false, error: 'Update checker not initialized' };
+});
+
+ipcMain.handle('get-last-update-check', async () => {
+  const appSettings = await settings.get('app');
+  return appSettings.lastUpdateCheck || null;
+});
+
+// MQTT status IPC handlers
+ipcMain.on('get-mqtt-status', (event) => {
+  event.reply('mqtt-connection-status', mqttConnected);
+});
+
+function updateMqttStatusInSettings(isConnected) {
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.webContents.send('mqtt-connection-status', isConnected);
+  }
+}
+
 async function connectMqtt() {
   let mqttConfig = await settings.get('mqtt');
   console.log('MQTT Config after await:', mqttConfig);
   if (!mqttConfig) {
     mqttConfig = defaultMqttConfig;
-    settings.set('mqtt', defaultMqttConfig);
+    await settings.set('mqtt', defaultMqttConfig);
+  } else {
+    // Ensure all required fields are present, merge with defaults if missing
+    mqttConfig = { ...defaultMqttConfig, ...mqttConfig };
+    await settings.set('mqtt', mqttConfig);
   }
   console.log('MQTT Config before connect:', mqttConfig);
   const brokerUrl = `mqtt://${mqttConfig.brokerIp}:${mqttConfig.brokerPort}`;
@@ -127,6 +173,7 @@ async function connectMqtt() {
   mqttClient.on('connect', () => {
     console.log('Connected to MQTT broker');
     mqttConnected = true;
+    updateMqttStatusInSettings(true);
     console.log('Subscribing to topic:', mqttConfig.topic);
     mqttClient.subscribe(mqttConfig.topic, (err) => {
       if (err) {
@@ -142,7 +189,9 @@ async function connectMqtt() {
     if (!mqttPaused) {
       try {
         const data = JSON.parse(message.toString());
-        updateTrayTitle(data.temp, data.hum);
+        lastTemp = data.temp;
+        lastHum = data.hum;
+        updateTrayTitle();
         if (mainWindow) {
           mainWindow.webContents.send('mqtt-data', data);
         }
@@ -155,6 +204,7 @@ async function connectMqtt() {
   mqttClient.on('error', (err) => {
     console.error('MQTT error:', err);
     mqttConnected = false;
+    updateMqttStatusInSettings(false);
     if (tray) {
       tray.setTitle('MQTT Error');
     }
@@ -163,44 +213,55 @@ async function connectMqtt() {
   mqttClient.on('close', () => {
     console.log('Disconnected from MQTT broker');
     mqttConnected = false;
+    updateMqttStatusInSettings(false);
     if (tray) {
       tray.setTitle('Disconnected');
     }
   });
 }
 
-async function updateTrayTitle(temp, hum) {
-  if (tray && process.platform === 'darwin') {
+async function updateTrayTitle() {
+  if (tray) {
     const appSettings = await settings.get('app');
     let title = '';
+    let icon;
 
-    if (appSettings.showTemperature) {
-      title += `${temp}°C`;
+    if (appSettings && appSettings.showIconInMenubar) {
+      const iconPath = path.join(__dirname, '../../assets/icons/menubar_icon_16.png');
+      icon = nativeImage.createFromPath(iconPath);
+    } else {
+      icon = nativeImage.createEmpty();
     }
-    if (appSettings.showHumidity) {
+
+    if (process.platform === 'darwin') {
+      icon.setTemplateImage(true);
+    }
+    tray.setImage(icon);
+
+    if (appSettings && appSettings.showTemperature && lastTemp !== null) {
+      title += `${lastTemp}°C`;
+    }
+    if (appSettings && appSettings.showHumidity && lastHum !== null) {
       if (title) title += ' - ';
-      title += `${hum}%`;
+      title += `${lastHum}%`;
     }
-    if (!title) {
-      title = 'Sensor Data';
-    }
-    tray.setTitle(`${title}`); // Set title without icon
-    console.log('Updating tray title with:', title);
+    
+    tray.setTitle(title);
   }
 }
 
 function createTray() {
+  console.log('Creating tray...');
+  const iconPath = path.join(__dirname, '../../assets/icons/menubar_icon_16.png');
+  const icon = nativeImage.createFromPath(iconPath);
   if (process.platform === 'darwin') {
-    console.log('Creating tray...');
-    const iconPath = path.join(__dirname, '../../assets/icons/menubar_icon_16.png');
-    const icon = nativeImage.createFromPath(iconPath);
     icon.setTemplateImage(true); // Make it a template image for macOS color matching
-    tray = new Tray(icon);
-    console.log('Tray created:', !!tray);
-    updateTrayMenu();
-    tray.setToolTip('Sensor Menu App');
-    tray.setTitle('Connecting...');
   }
+  tray = new Tray(icon);
+  console.log('Tray created:', !!tray);
+  updateTrayMenu();
+  tray.setToolTip('Sensor Menu App');
+  tray.setTitle('Connecting...');
 }
 
 function updateTrayMenu() {
@@ -217,7 +278,11 @@ function updateTrayMenu() {
         }
       }
     },
-    { label: 'Check for updates...', type: 'normal' },
+    { label: 'Check for updates...', type: 'normal', click: async () => {
+      if (updateChecker) {
+        await updateChecker.checkForUpdates(false);
+      }
+    }},
     { label: 'Data', type: 'normal', click: () => {
       if (mainWindow) {
         mainWindow.focus();
@@ -231,8 +296,8 @@ function updateTrayMenu() {
         return;
       }
       settingsWindow = new BrowserWindow({
-        width: 640,
-        height: 320,
+        width: 680,
+        height: 480,
         maximizable: false, // Disable maximize button
         resizable: false,   // Disable resizing
         webPreferences: {
@@ -279,8 +344,19 @@ function updateTrayMenu() {
 
 app.whenReady().then(async () => {
   // Initialize settings with defaults if they don't exist
-  if (!(await settings.has('app'))) await settings.set('app', defaultAppSettings);
+  if (!(await settings.has('app'))) {
+    await settings.set('app', defaultAppSettings);
+  } else {
+    // Ensure all required fields are present, merge with defaults if missing
+    const currentAppSettings = await settings.get('app');
+    const mergedAppSettings = { ...defaultAppSettings, ...currentAppSettings };
+    await settings.set('app', mergedAppSettings);
+  }
   if (!(await settings.has('mqtt'))) await settings.set('mqtt', defaultMqttConfig);
+
+  // Initialize update checker
+  updateChecker = new UpdateChecker();
+  await updateChecker.startAutomaticChecks();
 
   createTray();
   await connectMqtt();
