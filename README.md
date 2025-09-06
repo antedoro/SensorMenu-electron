@@ -2,6 +2,8 @@
 
 SensorMenu is a standalone desktop application designed for macOS, Windows, and Linux, built with Electron. Its primary function is to connect to a local MQTT server, subscribe to a specific topic, and display real-time sensor data (temperature and humidity) directly in the system's menubar (macOS) or notification area (Windows/Linux).
 
+![SensorMenu Screenshot](assets/images/sensormenu_screenshot.webp)
+
 ## Features
 
 *   **MQTT Integration:** Connects to a local MQTT broker and subscribes to a configurable topic (default: `esp32/dht22`) to receive JSON-formatted sensor data (e.g., `{"temp": "21", "hum": "49"}`).
@@ -58,3 +60,16 @@ npm run build
 ```
 
 This command will generate the distributable files in the `dist/` directory. For macOS, this typically creates a `.dmg` or `.app` file.
+
+## macOS Installation and Troubleshooting
+
+On macOS, Gatekeeper may block the application because it is not yet notarized by Apple. If you see a message that "SensorMenu" is damaged and can't be opened, you will need to manually bypass Gatekeeper.
+
+Here's how:
+
+1.  Open the `.dmg` file and drag `SensorMenu.app` to your `/Applications` folder.
+2.  Open the Terminal and run this command:
+    ```bash
+    xattr -cr /Applications/SensorMenu.app
+    ```
+After running this command, you should be able to open the application.
