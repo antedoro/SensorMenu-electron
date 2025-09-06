@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, dialog } = require('electron');
 
 app.disableHardwareAcceleration();
 const path = require('path');
@@ -75,10 +75,15 @@ ipcMain.on('set-setting', async (event, key, value) => {
   if (key === 'showIconInMenubar' || key === 'showTemperature' || key === 'showHumidity') {
     updateTrayTitle();
   } else if (key === 'openAtLogin') {
-    app.setLoginItemSettings({
-      openAtLogin: value,
-      path: app.getPath('exe'),
-    });
+    try {
+      app.setLoginItemSettings({
+        openAtLogin: value,
+        path: app.getPath('exe'),
+      });
+    } catch (error) {
+      console.error('Failed to set login item settings:', error);
+      dialog.showErrorBox('Login Item Error', 'Could not set the application to open at login. Please check your system settings.');
+    }
   } else if (key === 'checkForUpdates' || key === 'updateFrequency') {
     if (updateChecker) {
       updateChecker.startAutomaticChecks();
@@ -353,6 +358,16 @@ app.whenReady().then(async () => {
     await settings.set('app', mergedAppSettings);
   }
   if (!(await settings.has('mqtt'))) await settings.set('mqtt', defaultMqttConfig);
+
+  try {
+    const appSettings = await settings.get('app');
+    app.setLoginItemSettings({
+      openAtLogin: appSettings.openAtLogin,
+      path: app.getPath('exe'),
+    });
+  } catch (error) {
+    console.error('Failed to set login item settings on startup:', error);
+  }
 
   // Initialize update checker
   updateChecker = new UpdateChecker();
